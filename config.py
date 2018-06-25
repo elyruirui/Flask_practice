@@ -29,10 +29,13 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
+
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+    WTF_CSRF_ENABLED = False
+
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
@@ -42,6 +45,7 @@ class ProductionConfig(Config):
     def init_app(cls, app):
         Config.init_app(app)
 
+        # email errors to the administrators
         import logging
         from logging.handlers import SMTPHandler
         credentials = None
@@ -54,7 +58,7 @@ class ProductionConfig(Config):
             mailhost=(cls.MAIL_SERVER, cls.MAIL_PORT),
             fromaddr=cls.MAIL_DEFAULT_SENDER,
             toaddrs=[cls.FLASKY_ADMIN],
-            subject=cls.FLASKY_MAIL_SUBJECT_PREFIX + 'Application Error',
+            subject=cls.FLASKY_MAIL_SUBJECT_PREFIX + ' Application Error',
             credentials=credentials,
             secure=secure)
         mail_handler.setLevel(logging.ERROR)
@@ -68,9 +72,11 @@ class HerokuConfig(ProductionConfig):
     def init_app(cls, app):
         ProductionConfig.init_app(app)
 
+        # handle proxy server headers
         from werkzeug.contrib.fixers import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app)
 
+        # log to stderr
         import logging
         from logging import StreamHandler
         file_handler = StreamHandler()
@@ -78,10 +84,11 @@ class HerokuConfig(ProductionConfig):
         app.logger.addHandler(file_handler)
 
 
-config ={
+config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+    'heroku': HerokuConfig,
 
     'default': DevelopmentConfig
 }
