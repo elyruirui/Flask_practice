@@ -19,6 +19,7 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     FLASKY_DB_QUERY_TIMEOUT = 0.5
     DATABASE_URL = 'postgresql-cubed-73956'
+    SSL_DISABLE = True
 
     @staticmethod
     def init_app(app):
@@ -66,11 +67,15 @@ class HerokuConfig(ProductionConfig):
     def init_app(cls, app):
         ProductionConfig.init_app(app)
 
+        from werkzeug.contrib.fixers import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
+
         import logging
         from logging import StreamHandler
         file_handler = StreamHandler()
         file_handler.setLevel(logging.WARNING)
         app.logger.addHandler(file_handler)
+        SSL_DISABLE = bool(os.environ.get('SSL_DISABLE'))
 
 
 config ={
