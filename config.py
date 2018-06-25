@@ -18,8 +18,7 @@ class Config:
     FLASKY_COMMENTS_PER_PAGE = 30
     SQLALCHEMY_RECORD_QUERIES = True
     FLASKY_DB_QUERY_TIMEOUT = 0.5
-    DATABASE_URL = 'postgresql-cubed-73956'
-    SSL_DISABLE = True
+    SSL_DISABLE = False
 
     @staticmethod
     def init_app(app):
@@ -63,6 +62,8 @@ class ProductionConfig(Config):
 
 
 class HerokuConfig(ProductionConfig):
+    SSL_DISABLE = bool(os.environ.get('SSL_DISABLE'))
+    
     @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
@@ -75,7 +76,6 @@ class HerokuConfig(ProductionConfig):
         file_handler = StreamHandler()
         file_handler.setLevel(logging.WARNING)
         app.logger.addHandler(file_handler)
-        SSL_DISABLE = bool(os.environ.get('SSL_DISABLE'))
 
 
 config ={
